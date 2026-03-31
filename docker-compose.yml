@@ -1,0 +1,95 @@
+version: "3.9"
+
+# ============================================================
+# Local AI Agent Stack: Langfuse + PostgreSQL + Redis
+# Langfuse v2 (NO ClickHouse, NO MinIO required)
+# ============================================================
+
+services:
+
+  # -------------------------------------------------------
+  # PostgreSQL — Dual-purpose primary store
+  #   • Langfuse: traces, scores, datasets, prompts
+  #   • Agent LTM: conversation history, notes, metrics
+  # -------------------------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    container_name: agent_postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_DB: postgres           # default db; init script creates the rest
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # -------------------------------------------------------
+  # Redis — Short-Term Memory (STM)
+  #   • Agent session context & recent message cache
+  #   • Fast ephemeral state with TTL
+  # -------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: agent_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass redis123
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redis123", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # -------------------------------------------------------
+  # Langfuse Server v2 — Observability UI & API
+  #   Backed by PostgreSQL only — no ClickHouse, no MinIO
+  # -------------------------------------------------------
+  langfuse-server:
+    image: langfuse/langfuse:2
+    container_name: langfuse_server
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      # --- Required ---
+      DATABASE_URL: postgresql://postgres:postgres123@postgres:5432/langfuse
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: "langfuse-nextauth-secret-32chars!!"   # change in prod
+      SALT: "langfuse-password-salt-32charslong"              # change in prod
+      ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
+
+      # --- Disable external telemetry ---
+      TELEMETRY_ENABLED: "false"
+
+      # --- Optional tuning ---
+      LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES: "false"
+      LANGFUSE_DEFAULT_PROJECT_ROLE: "OWNER"
+
+      # --- Blob / S3 storage: disabled (use DB for uploads) ---
+      LANGFUSE_S3_EVENT_UPLOAD_ENABLED: "false"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/public/health | grep -q 'ok' || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local

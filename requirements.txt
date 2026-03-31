@@ -1,0 +1,32 @@
+# =====================================================
+# LangGraph AI Agent + Langfuse Observability Stack
+# =====================================================
+
+# ---- LangGraph & LangChain Core ----
+langgraph>=0.2.28
+langchain>=0.3.7
+langchain-core>=0.3.15
+langchain-community>=0.3.7
+
+# ---- LLM Providers (free tiers) ----
+langchain-groq>=0.2.1              # Groq: fast free LLM API (default)
+langchain-google-genai>=2.0.0      # Google Gemini: free tier alternative
+
+# ---- Langfuse Observability ----
+langfuse>=2.0.0
+
+# ---- PostgreSQL (Long-Term Memory) ----
+psycopg2-binary>=2.9.9
+sqlalchemy>=2.0.36
+
+# ---- Redis (Short-Term Memory) ----
+redis>=5.2.0
+
+# ---- Config & Utilities ----
+python-dotenv>=1.0.1
+pydantic>=2.9.2
+pydantic-settings>=2.6.1
+
+# ---- CLI / Output ----
+rich>=13.9.4
+tabulate>=0.9.0
