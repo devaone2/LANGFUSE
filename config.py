@@ -30,8 +30,8 @@ class Settings(BaseSettings):
     # ----------------------------------------------------------------
     POSTGRES_USER: str = Field("postgres")
     POSTGRES_PASSWORD: str = Field("postgres123")
-    POSTGRES_HOST: str = Field("localhost")
-    POSTGRES_PORT: int = Field(5432)
+    POSTGRES_HOST: str = Field("127.0.0.1")   # explicit IPv4 — avoids ::1 on Windows
+    POSTGRES_PORT: int = Field(5433)           # 5433 avoids conflict with local Postgres
     POSTGRES_AGENT_DB: str = Field("agent_memory")
 
     @computed_field
@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     # ----------------------------------------------------------------
     # Redis — Short-Term Memory (STM)
     # ----------------------------------------------------------------
-    REDIS_HOST: str = Field("localhost")
+    REDIS_HOST: str = Field("127.0.0.1")   # explicit IPv4 — avoids ::1 on Windows
     REDIS_PORT: int = Field(6379)
     REDIS_PASSWORD: str = Field("redis123")
     REDIS_DB: int = Field(0)

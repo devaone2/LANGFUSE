@@ -27,6 +27,7 @@ Langfuse monitoring
   surfaced in the Langfuse UI.
 """
 
+import langchain_compat  # must be first — patches langchain 1.x paths for Langfuse SDK v2
 import logging
 import uuid
 from typing import Annotated, Literal, TypedDict
@@ -357,7 +358,9 @@ def run_agent(
     ltm.upsert_metrics(session_id, increment_messages=1)
     stm.set_session_info(session_id, user_id="local-user")
 
-    # ── Langfuse callback ───────────────────────────────────
+    # ── Langfuse callback (SDK v2 + server v2) ─────────────
+    # langchain_compat (imported at top of file) patches the old
+    # langchain.* paths so Langfuse SDK v2 can import them on langchain 1.x.
     callbacks: list = []
     if settings.langfuse_enabled:
         try:
@@ -368,9 +371,7 @@ def run_agent(
                 host=settings.LANGFUSE_HOST,
                 session_id=session_id,
                 user_id="local-user",
-                # Tags appear in the Langfuse filter sidebar
                 tags=["multi-agent", "langgraph"],
-                # Free-form metadata visible on the trace detail page
                 metadata={
                     "llm_provider": settings.LLM_PROVIDER,
                     "model":        settings.GROQ_MODEL or settings.GOOGLE_MODEL,

@@ -154,8 +154,8 @@ class LongTermMemory:
             if metrics is None:
                 metrics = SessionMetrics(session_id=session_id)
                 db.add(metrics)
-            metrics.total_messages  += increment_messages
-            metrics.tool_calls_count += increment_tool_calls
+            metrics.total_messages   = (metrics.total_messages   or 0) + increment_messages
+            metrics.tool_calls_count = (metrics.tool_calls_count or 0) + increment_tool_calls
             metrics.updated_at = datetime.now(timezone.utc)
             if langfuse_trace_id:
                 metrics.langfuse_trace_id = langfuse_trace_id

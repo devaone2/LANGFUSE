@@ -13,7 +13,9 @@ langchain-groq>=0.2.1              # Groq: fast free LLM API (default)
 langchain-google-genai>=2.0.0      # Google Gemini: free tier alternative
 
 # ---- Langfuse Observability ----
-langfuse>=2.0.0
+# Pinned to v2 to match Langfuse server v2 in docker-compose.yml.
+# SDK v2 uses the REST API — no ClickHouse or OTLP required.
+langfuse>=2.0.0,<3.0.0
 
 # ---- PostgreSQL (Long-Term Memory) ----
 psycopg2-binary>=2.9.9

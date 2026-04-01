@@ -1,5 +1,3 @@
-version: "3.9"
-
 # ============================================================
 # Local AI Agent Stack: Langfuse + PostgreSQL + Redis
 # Langfuse v2 (NO ClickHouse, NO MinIO required)
@@ -17,16 +15,17 @@ services:
     container_name: agent_postgres
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      - "5433:5432"          # 5433 avoids conflict with any local Postgres on Windows
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres123
-      POSTGRES_DB: postgres           # default db; init script creates the rest
+      POSTGRES_DB: langfuse           # langfuse is the primary DB — created by Postgres itself, not the init script
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      # Wait until the `langfuse` database actually exists and accepts connections
+      test: ["CMD-SHELL", "pg_isready -U postgres -d langfuse"]
       interval: 5s
       timeout: 5s
       retries: 20
